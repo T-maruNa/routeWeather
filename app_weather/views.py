@@ -1,5 +1,7 @@
 from django.http.response import HttpResponse
 from .controller import getWeatherController
+from django.http.response import JsonResponse
+
 
 def PassMethod():
     return HttpResponse('RouteWeather')
@@ -7,6 +9,6 @@ def PassMethod():
 def weather(request):
     gw = getWeatherController()
     # 仮値で伊勢崎のID
-    cities = 1861436
-    data = gw.getOpenWeatherMap(cities)
+    city_id = 1861436
+    data = gw.getOpenWeatherMap(city_id)
     return HttpResponse(data)
