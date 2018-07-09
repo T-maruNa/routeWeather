@@ -20,22 +20,29 @@ class getWeatherController:
         diff_point_lon = 50 * 1000 * self.__one_meter
         cnt = 0
         # 市区町村の情報をgzipから取得
-        with gzip.open(CITY_CODE_LIST,'rb',9) as f:
+        with gzip.open(CITY_CODE_LIST, 'rb') as f:
             world_ctiys_data = json.load(f)
+
         japan_ctiys_data = [wcd for wcd in world_ctiys_data if wcd['country'] == 'JP']
         tager_city = [ocd for ocd in japan_ctiys_data if ocd['id'] == _city_id]
         # なぜか配列で取れない
         # base_lon = tager_city['coord']['lon']
         # base_lat = tager_city['coord']['lat']
         # ↑これでとれない なぜ？？？
+        # 文字列で取得されるらしい
         base_lon = [lon['coord']['lon'] for lon in tager_city]
         base_lat = [lon['coord']['lat'] for lon in tager_city]
 
         # 指定の市の周りの範囲座標を設定
         #top_point_lon = base_lon + diff_point_lon
-        top_point_lon = float(base_lon[0]) + 1.0
+        top_point_lon = float(base_lon[0]) + diff_point_lon
         min_point_lon = float(base_lon[0]) - diff_point_lon
-        around_ctiys_data = [acd for acd in japan_ctiys_data if top_point_lon > japan_ctiys_data['coord']['lon'][0] > min_point_lon]
+        #top_point_lat = float(base_lat[0]) + 2.0
+        #min_point_lat = float(base_lat[0]) - 2.0
+        top_point_lat = 35.0
+        min_point_lat = 0.001
+
+        around_ctiys_data = [acd for acd in japan_ctiys_data if top_point_lon > float(acd['coord']['lon']) > min_point_lon and top_point_lat > float(acd['coord']['lat']) > min_point_lat]
         return around_ctiys_data
         # 各都市の温度を取得する
         # あっちゅーまにAPIのリクエスト限界が来てしまうのでリミット設定
