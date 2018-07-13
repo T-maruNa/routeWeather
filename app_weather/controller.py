@@ -10,14 +10,24 @@ class getWeatherController:
     __api = "http://api.openweathermap.org/data/2.5/weather?id={city_id}&APPID={key}"
     # 0.000277778 は30m当たりの度数なので30で割ることで1m当たりの度数を取得
     # 詳しくはwebで
-    __one_meter = float(0.000277778) / 30
-
+    __one_meter_lat = float(0.000277778) / 30
+    # 1度 111kmなので111000で割って1m当たりの度数を取得
+    __one_meter_lon = 1 / 111000
+    __km_unit = 1000
     def __init__(self):
         super(getWeatherController, self).__init__()
 
+    # 値が範囲内か判定する(内包表記のなかで書くと見にくかった)
+    def getRangeCity(self ,lon, lat, t_lon, m_lon, t_lat, m_lat):
+        _lon = float(lon)
+        _lat = float(lat)
+        return (t_lon > lon > m_lon ) and (t_lat > lat > m_lat)
+
     def getOpenWeatherMap(self, _city_id):
         result_data = []
-        diff_point_lon = 50 * 1000 * self.__one_meter
+        range_km = 10 * self.__km_unit
+        diff_lon = range_km * self.__one_meter_lon
+        diff_lat = range_km * self.__one_meter_lat
         cnt = 0
         # 市区町村の情報をgzipから取得
         with gzip.open(CITY_CODE_LIST, 'rb') as f:
@@ -30,19 +40,16 @@ class getWeatherController:
         # base_lat = tager_city['coord']['lat']
         # ↑これでとれない なぜ？？？
         # 文字列で取得されるらしい
+        # ↓これだと取れた
         base_lon = [lon['coord']['lon'] for lon in tager_city]
-        base_lat = [lon['coord']['lat'] for lon in tager_city]
+        base_lat = [lat['coord']['lat'] for lat in tager_city]
 
         # 指定の市の周りの範囲座標を設定
-        #top_point_lon = base_lon + diff_point_lon
-        top_point_lon = float(base_lon[0]) + diff_point_lon
-        min_point_lon = float(base_lon[0]) - diff_point_lon
-        #top_point_lat = float(base_lat[0]) + 2.0
-        #min_point_lat = float(base_lat[0]) - 2.0
-        top_point_lat = 35.0
-        min_point_lat = 0.001
-
-        around_ctiys_data = [acd for acd in japan_ctiys_data if top_point_lon > float(acd['coord']['lon']) > min_point_lon and top_point_lat > float(acd['coord']['lat']) > min_point_lat]
+        top_lon = float(base_lon[0]) + diff_lon
+        min_lon = float(base_lon[0]) - diff_lon
+        top_lat = float(base_lat[0]) + diff_lat
+        min_lat = float(base_lat[0]) - diff_lat
+        around_ctiys_data = [acd['name']+'<br/>' for acd in japan_ctiys_data if self.getRangeCity(acd['coord']['lon'], acd['coord']['lat'], top_lon, min_lon, top_lat, min_lat)]
         return around_ctiys_data
         # 各都市の温度を取得する
         # あっちゅーまにAPIのリクエスト限界が来てしまうのでリミット設定
