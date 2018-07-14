@@ -49,11 +49,9 @@ class getWeatherController:
         min_lon = float(base_lon[0]) - diff_lon
         top_lat = float(base_lat[0]) + diff_lat
         min_lat = float(base_lat[0]) - diff_lat
-        around_ctiys_data = [acd['name']+'<br/>' for acd in japan_ctiys_data if self.getRangeCity(acd['coord']['lon'], acd['coord']['lat'], top_lon, min_lon, top_lat, min_lat)]
-        return around_ctiys_data
-        # 各都市の温度を取得する
-        # あっちゅーまにAPIのリクエスト限界が来てしまうのでリミット設定
-        for ctiy in around_ctiys_data[0:5]:
+        around_ctiys_data = [acd for acd in japan_ctiys_data if self.getRangeCity(acd['coord']['lon'], acd['coord']['lat'], top_lon, min_lon, top_lat, min_lat)]
+        # 各都市の温度、天気を取得する
+        for ctiy in around_ctiys_data:
             id = ctiy['id']
             # APIのURLを得る
             url = self.__api.format(city_id=id, key=API_KEY)
@@ -62,10 +60,12 @@ class getWeatherController:
             # 結果はJSON形式なのでデコード
             tmp = json.loads(r.text)
             if(tmp and tmp['cod'] == 200):
-                result_data.append([
-                     tmp['name']
-                    ,tmp['weather'][0]['description']
-                    ,tmp['main']['temp'] // 10
-                    ,ctiy
-                ])
+                result_data.append({
+                     'name':tmp['name']
+                    ,'weather':tmp['weather'][0]['description']
+                    ,'temp':tmp['main']['temp'] // 10
+                    ,'lon':ctiy['coord']['lon']
+                    ,'lat':ctiy['coord']['lat']
+                })
+        
         return result_data
